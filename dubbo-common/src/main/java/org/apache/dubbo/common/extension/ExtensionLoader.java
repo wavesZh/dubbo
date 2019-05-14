@@ -125,8 +125,9 @@ public class ExtensionLoader<T> {
 
         ExtensionLoader<T> loader = (ExtensionLoader<T>) EXTENSION_LOADERS.get(type);
         if (loader == null) {
-            EXTENSION_LOADERS.putIfAbsent(type, new ExtensionLoader<T>(type));
-            loader = (ExtensionLoader<T>) EXTENSION_LOADERS.get(type);
+			ExtensionLoader<T> existed = (ExtensionLoader<T>) EXTENSION_LOADERS.putIfAbsent(type, new ExtensionLoader<T>(type));
+			loader = existed == null ? (ExtensionLoader<T>) EXTENSION_LOADERS.get(type) : existed;
+//			loader = (ExtensionLoader<T>) EXTENSION_LOADERS.get(type);
         }
         return loader;
     }

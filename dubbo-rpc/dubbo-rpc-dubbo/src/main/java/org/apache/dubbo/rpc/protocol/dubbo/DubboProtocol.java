@@ -544,7 +544,9 @@ public class DubboProtocol extends AbstractProtocol {
      * @return
      */
     private List<ReferenceCountExchangeClient> buildReferenceCountExchangeClientList(URL url, int connectNum) {
-        List<ReferenceCountExchangeClient> clients = new CopyOnWriteArrayList<>();
+		// TODO: 2019-05-09 replace with normal list ?
+//    	List<ReferenceCountExchangeClient> clients = new CopyOnWriteArrayList<>();
+    	List<ReferenceCountExchangeClient> clients = new ArrayList<>();
 
         for (int i = 0; i < connectNum; i++) {
             clients.add(buildReferenceCountExchangeClient(url));
@@ -590,7 +592,6 @@ public class DubboProtocol extends AbstractProtocol {
             // connection should be lazy
             if (url.getParameter(LAZY_CONNECT_KEY, false)) {
                 client = new LazyConnectExchangeClient(url, requestHandler);
-
             } else {
                 client = Exchangers.connect(url, requestHandler);
             }
