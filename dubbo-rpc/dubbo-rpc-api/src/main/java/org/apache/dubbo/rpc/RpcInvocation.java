@@ -31,7 +31,7 @@ import static org.apache.dubbo.common.constants.CommonConstants.INTERFACE_KEY;
 import static org.apache.dubbo.common.constants.CommonConstants.PATH_KEY;
 import static org.apache.dubbo.common.constants.CommonConstants.TIMEOUT_KEY;
 import static org.apache.dubbo.common.constants.CommonConstants.VERSION_KEY;
-import static org.apache.dubbo.common.constants.RpcConstants.TOKEN_KEY;
+import static org.apache.dubbo.rpc.Constants.TOKEN_KEY;
 
 /**
  * RPC Invocation.
@@ -51,6 +51,10 @@ public class RpcInvocation implements Invocation, Serializable {
     private Map<String, String> attachments;
 
     private transient Invoker<?> invoker;
+
+    private transient Class<?> returnType;
+
+    private transient InvokeMode invokeMode;
 
     public RpcInvocation() {
     }
@@ -94,6 +98,7 @@ public class RpcInvocation implements Invocation, Serializable {
 
     public RpcInvocation(Method method, Object[] arguments, Map<String, String> attachment) {
         this(method.getName(), method.getParameterTypes(), arguments, attachment, null);
+        this.returnType = method.getReturnType();
     }
 
     public RpcInvocation(String methodName, Class<?>[] parameterTypes, Object[] arguments) {
@@ -210,6 +215,22 @@ public class RpcInvocation implements Invocation, Serializable {
             return defaultValue;
         }
         return value;
+    }
+
+    public Class<?> getReturnType() {
+        return returnType;
+    }
+
+    public void setReturnType(Class<?> returnType) {
+        this.returnType = returnType;
+    }
+
+    public InvokeMode getInvokeMode() {
+        return invokeMode;
+    }
+
+    public void setInvokeMode(InvokeMode invokeMode) {
+        this.invokeMode = invokeMode;
     }
 
     @Override

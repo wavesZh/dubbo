@@ -21,6 +21,7 @@ import org.apache.dubbo.common.utils.NetUtils;
 import org.apache.dubbo.monitor.Monitor;
 import org.apache.dubbo.monitor.MonitorFactory;
 import org.apache.dubbo.monitor.MonitorService;
+import org.apache.dubbo.rpc.AsyncRpcResult;
 import org.apache.dubbo.rpc.Invocation;
 import org.apache.dubbo.rpc.Invoker;
 import org.apache.dubbo.rpc.Result;
@@ -40,7 +41,7 @@ import java.util.List;
 import static org.apache.dubbo.common.constants.CommonConstants.APPLICATION_KEY;
 import static org.apache.dubbo.common.constants.CommonConstants.CONSUMER_SIDE;
 import static org.apache.dubbo.common.constants.CommonConstants.SIDE_KEY;
-import static org.apache.dubbo.common.constants.MonitorConstants.MONITOR_KEY;
+import static org.apache.dubbo.common.constants.CommonConstants.MONITOR_KEY;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
@@ -77,7 +78,7 @@ public class MonitorFilterTest {
 
         public Result invoke(Invocation invocation) throws RpcException {
             lastInvocation = invocation;
-            return null;
+            return AsyncRpcResult.newDefaultAsyncResult(invocation);
         }
 
         @Override
@@ -119,7 +120,11 @@ public class MonitorFilterTest {
         monitorFilter.setMonitorFactory(monitorFactory);
         Invocation invocation = new RpcInvocation("aaa", new Class<?>[0], new Object[0]);
         RpcContext.getContext().setRemoteAddress(NetUtils.getLocalHost(), 20880).setLocalAddress(NetUtils.getLocalHost(), 2345);
-        monitorFilter.invoke(serviceInvoker, invocation);
+        Result result = monitorFilter.invoke(serviceInvoker, invocation);
+        result.thenApplyWithContext((r) -> {
+            monitorFilter.listener().onResponse(r, serviceInvoker, invocation);
+            return r;
+        });
         while (lastStatistics == null) {
             Thread.sleep(10);
         }
@@ -155,7 +160,11 @@ public class MonitorFilterTest {
         monitorFilter.setMonitorFactory(monitorFactory);
         Invocation invocation = new RpcInvocation("$invoke", new Class<?>[]{String.class, String[].class, Object[].class}, new Object[]{"xxx", new String[]{}, new Object[]{}});
         RpcContext.getContext().setRemoteAddress(NetUtils.getLocalHost(), 20880).setLocalAddress(NetUtils.getLocalHost(), 2345);
-        monitorFilter.invoke(serviceInvoker, invocation);
+        Result result = monitorFilter.invoke(serviceInvoker, invocation);
+        result.thenApplyWithContext((r) -> {
+            monitorFilter.listener().onResponse(r, serviceInvoker, invocation);
+            return r;
+        });
         while (lastStatistics == null) {
             Thread.sleep(10);
         }

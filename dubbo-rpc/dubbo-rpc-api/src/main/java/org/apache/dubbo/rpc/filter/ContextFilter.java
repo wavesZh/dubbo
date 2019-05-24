@@ -17,9 +17,9 @@
 package org.apache.dubbo.rpc.filter;
 
 import org.apache.dubbo.common.extension.Activate;
-import org.apache.dubbo.rpc.Filter;
 import org.apache.dubbo.rpc.Invocation;
 import org.apache.dubbo.rpc.Invoker;
+import org.apache.dubbo.rpc.ListenableFilter;
 import org.apache.dubbo.rpc.Result;
 import org.apache.dubbo.rpc.RpcContext;
 import org.apache.dubbo.rpc.RpcException;
@@ -28,7 +28,6 @@ import org.apache.dubbo.rpc.RpcInvocation;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.apache.dubbo.common.constants.ClusterConstants.TAG_KEY;
 import static org.apache.dubbo.common.constants.CommonConstants.GROUP_KEY;
 import static org.apache.dubbo.common.constants.CommonConstants.INTERFACE_KEY;
 import static org.apache.dubbo.common.constants.CommonConstants.PATH_KEY;
@@ -36,10 +35,10 @@ import static org.apache.dubbo.common.constants.CommonConstants.PROVIDER;
 import static org.apache.dubbo.common.constants.CommonConstants.REMOTE_APPLICATION_KEY;
 import static org.apache.dubbo.common.constants.CommonConstants.TIMEOUT_KEY;
 import static org.apache.dubbo.common.constants.CommonConstants.VERSION_KEY;
-import static org.apache.dubbo.common.constants.RpcConstants.ASYNC_KEY;
+import static org.apache.dubbo.rpc.Constants.ASYNC_KEY;
 import static org.apache.dubbo.common.constants.RpcConstants.DUBBO_VERSION_KEY;
-import static org.apache.dubbo.common.constants.RpcConstants.FORCE_USE_TAG;
-import static org.apache.dubbo.common.constants.RpcConstants.TOKEN_KEY;
+import static org.apache.dubbo.rpc.Constants.FORCE_USE_TAG;
+import static org.apache.dubbo.rpc.Constants.TOKEN_KEY;
 
 
 /**
@@ -49,7 +48,12 @@ import static org.apache.dubbo.common.constants.RpcConstants.TOKEN_KEY;
  * @see RpcContext
  */
 @Activate(group = PROVIDER, order = -10000)
-public class ContextFilter implements Filter {
+public class ContextFilter extends ListenableFilter {
+    private static final String TAG_KEY = "dubbo.tag";
+
+    public ContextFilter() {
+        super.listener = new ContextListener();
+    }
 
     @Override
     public Result invoke(Invoker<?> invoker, Invocation invocation) throws RpcException {
@@ -97,10 +101,16 @@ public class ContextFilter implements Filter {
         }
     }
 
-    @Override
-    public Result onResponse(Result result, Invoker<?> invoker, Invocation invocation) {
-        // pass attachments to result
-        result.addAttachments(RpcContext.getServerContext().getAttachments());
-        return result;
+    static class ContextListener implements Listener {
+        @Override
+        public void onResponse(Result appResponse, Invoker<?> invoker, Invocation invocation) {
+            // pass attachments to result
+            appResponse.addAttachments(RpcContext.getServerContext().getAttachments());
+        }
+
+        @Override
+        public void onError(Throwable t, Invoker<?> invoker, Invocation invocation) {
+
+        }
     }
 }
