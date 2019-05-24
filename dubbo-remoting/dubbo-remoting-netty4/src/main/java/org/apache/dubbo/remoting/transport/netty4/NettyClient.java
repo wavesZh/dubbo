@@ -45,7 +45,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import java.net.InetSocketAddress;
 
 /**
- * NettyClient.
+ * NettyClient
  */
 public class NettyClient extends AbstractClient {
 
@@ -58,16 +58,33 @@ public class NettyClient extends AbstractClient {
     private static final String SOCKS_PROXY_PORT = "socksProxyPort";
 
     private static final String DEFAULT_SOCKS_PROXY_PORT = "1080";
-
+	/**
+	 * netty bootstrap
+	 */
     private Bootstrap bootstrap;
+	/**
+	 * current channel. Each successful invoke of {@link NettyClient#doConnect()} will
+	 * replace this with new channel and close old channel.
+	 * <b>volatile, please copy reference to use.</b>
+	 */
+    private volatile Channel channel;
 
-    private volatile Channel channel; // volatile, please copy reference to use
-
+	/**
+	 *
+	 * @param url
+	 * @param handler dubbo channel that contain netty channel
+	 * @throws RemotingException
+	 */
     public NettyClient(final URL url, final ChannelHandler handler) throws RemotingException {
-        super(url, wrapChannelHandler(url, handler));
+    	super(url, wrapChannelHandler(url, handler));
     }
 
-    @Override
+	/**
+	 * init bootstrap
+	 *
+	 * @throws Throwable
+	 */
+	@Override
     protected void doOpen() throws Throwable {
         final NettyClientHandler nettyClientHandler = new NettyClientHandler(getUrl(), this);
         bootstrap = new Bootstrap();
@@ -116,7 +133,8 @@ public class NettyClient extends AbstractClient {
                 Channel newChannel = future.channel();
                 try {
                     // Close old channel
-                    Channel oldChannel = NettyClient.this.channel; // copy reference
+					// copy reference
+                    Channel oldChannel = NettyClient.this.channel;
                     if (oldChannel != null) {
                         try {
                             if (logger.isInfoEnabled()) {
@@ -152,6 +170,7 @@ public class NettyClient extends AbstractClient {
                         + NetUtils.getLocalHost() + " using dubbo version " + Version.getVersion());
             }
         } finally {
+        	// just add new valid channel to NettyChannel's mapping
             if (!isConnected()) {
                 //future.cancel(true);
             }
@@ -169,7 +188,7 @@ public class NettyClient extends AbstractClient {
 
     @Override
     protected void doClose() throws Throwable {
-        //can't shutdown nioEventLoopGroup
+        //can't shutdown nioEventLoopGroup because the method will be invoked when closing one channel but not a client
         //nioEventLoopGroup.shutdownGracefully();
     }
 

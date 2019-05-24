@@ -35,18 +35,30 @@ import static org.apache.dubbo.common.constants.CommonConstants.DEFAULT_TIMEOUT;
 import static org.apache.dubbo.common.constants.CommonConstants.TIMEOUT_KEY;
 
 /**
- * NettyChannel.
+ * NettyChannel communicate over the network by netty's {@link NettyChannel#channel}.
  */
 final class NettyChannel extends AbstractChannel {
 
     private static final Logger logger = LoggerFactory.getLogger(NettyChannel.class);
-
+	/**
+	 * the mapping for netty's channel and dubbo's channel
+	 */
     private static final ConcurrentMap<Channel, NettyChannel> CHANNEL_MAP = new ConcurrentHashMap<Channel, NettyChannel>();
-
+	/**
+	 * Netty's channel
+	 */
     private final Channel channel;
 
     private final Map<String, Object> attributes = new ConcurrentHashMap<String, Object>();
 
+	/**
+	 * The constructor of NettyChannel.
+	 * It is private so NettyChannel usually create by {@link NettyChannel#getOrAddChannel(Channel, URL, ChannelHandler)}
+	 *
+	 * @param channel netty's channel
+	 * @param url
+	 * @param handler dubbo's handler that contain netty's handler
+	 */
     private NettyChannel(Channel channel, URL url, ChannelHandler handler) {
         super(url, handler);
         if (channel == null) {
@@ -55,11 +67,21 @@ final class NettyChannel extends AbstractChannel {
         this.channel = channel;
     }
 
+	/**
+	 * Get dubbo's channel by netty's channel by mapping.
+	 * Put netty's channel if dubbo's channel don't exist in the mapping.
+	 *
+	 * @param ch netty's channel
+	 * @param url
+	 * @param handler dubbo's handler that contain netty's handler
+	 * @return
+	 */
     static NettyChannel getOrAddChannel(Channel ch, URL url, ChannelHandler handler) {
         if (ch == null) {
             return null;
         }
         NettyChannel ret = CHANNEL_MAP.get(ch);
+		// if ret is not null and  return  even if ret is not active
         if (ret == null) {
             NettyChannel nettyChannel = new NettyChannel(ch, url, handler);
             if (ch.isActive()) {
@@ -69,9 +91,15 @@ final class NettyChannel extends AbstractChannel {
                 ret = nettyChannel;
             }
         }
+
         return ret;
     }
 
+	/**
+	 * Remove the inactive channel.
+	 *
+	 * @param ch netty's channel
+	 */
     static void removeChannelIfDisconnected(Channel ch) {
         if (ch != null && !ch.isActive()) {
             CHANNEL_MAP.remove(ch);
@@ -93,15 +121,24 @@ final class NettyChannel extends AbstractChannel {
         return !isClosed() && channel.isActive();
     }
 
+	/**
+	 * Send message by netty and whether to wait the completion of the send
+	 *
+	 * @param message message that need send.
+	 * @param sent waiting message sent until timeout if true.
+	 * @throws RemotingException throw RemotingException if wait until timeout or any exception thrown by method body that surrounded by try-catch.
+	 */
     @Override
     public void send(Object message, boolean sent) throws RemotingException {
-        super.send(message, sent);
+        // determine whether the channel is closed
+    	super.send(message, sent);
 
         boolean success = true;
         int timeout = 0;
         try {
             ChannelFuture future = channel.writeAndFlush(message);
             if (sent) {
+            	// wait timeout ms
                 timeout = getUrl().getPositiveParameter(TIMEOUT_KEY, DEFAULT_TIMEOUT);
                 success = future.await(timeout);
             }
@@ -112,7 +149,7 @@ final class NettyChannel extends AbstractChannel {
         } catch (Throwable e) {
             throw new RemotingException(this, "Failed to send message " + message + " to " + getRemoteAddress() + ", cause: " + e.getMessage(), e);
         }
-
+        // false when wait timeout
         if (!success) {
             throw new RemotingException(this, "Failed to send message " + message + " to " + getRemoteAddress()
                     + "in timeout(" + timeout + "ms) limit");

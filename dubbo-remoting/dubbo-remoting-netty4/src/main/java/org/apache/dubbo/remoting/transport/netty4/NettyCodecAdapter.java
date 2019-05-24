@@ -31,12 +31,17 @@ import java.io.IOException;
 import java.util.List;
 
 /**
- * NettyCodecAdapter.
+ * NettyCodecAdapter is the adapter of Netty's codec handler.
+ *
  */
 final public class NettyCodecAdapter {
-
+	/**
+	 * Netty's handler for encoder
+	 */
     private final ChannelHandler encoder = new InternalEncoder();
-
+	/**
+	 * Netty's handler for decoder
+	 */
     private final ChannelHandler decoder = new InternalDecoder();
 
     private final Codec2 codec;
