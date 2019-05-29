@@ -65,15 +65,16 @@ final class NettyChannel extends AbstractChannel {
         }
         this.channel = channel;
     }
-	/**
-	 * Get dubbo channel by netty channel through channel cache.
-	 * Put netty channel into it if dubbo channel don't exist in the cache.
-	 *
-	 * @param ch netty's channel
-	 * @param url
-	 * @param handler dubbo's handler that contain netty's handler
-	 * @return
-	 */
+
+    /**
+     * Get dubbo channel by netty channel through channel cache.
+     * Put netty channel into it if dubbo channel don't exist in the cache.
+     *
+     * @param ch netty's channel
+     * @param url
+     * @param handler dubbo's handler that contain netty's handler
+     * @return
+     */
     static NettyChannel getOrAddChannel(Channel ch, URL url, ChannelHandler handler) {
         if (ch == null) {
             return null;
