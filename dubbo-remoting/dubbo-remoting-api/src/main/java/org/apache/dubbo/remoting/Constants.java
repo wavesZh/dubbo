@@ -36,11 +36,13 @@ public interface Constants {
     String IDLE_TIMEOUT_KEY = "idle.timeout";
 
     int DEFAULT_IDLE_TIMEOUT = 600 * 1000;
-	/**
+    /**
 	 * max size of channel. default value is zero that means unlimited.
 	 */
     String ACCEPTS_KEY = "accepts";
-
+    /**
+     * test
+     */
 	int DEFAULT_ACCEPTS = 0;
 
     String CONNECT_QUEUE_CAPACITY = "connect.queue.capacity";
