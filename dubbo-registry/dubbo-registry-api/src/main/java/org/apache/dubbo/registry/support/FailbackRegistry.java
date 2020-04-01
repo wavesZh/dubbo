@@ -194,7 +194,7 @@ public abstract class FailbackRegistry extends AbstractRegistry {
             retryTimer.newTimeout(newTask, retryPeriod, TimeUnit.MILLISECONDS);
         } else {
             // just add urls which needs retry.
-            newTask.addUrlToRetry(urls);
+            f.addUrlToRetry(urls);
         }
     }
 
